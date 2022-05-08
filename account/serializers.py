@@ -6,7 +6,6 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from account.utils import Util
 
 
-
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(style={'input_type':'password'},write_only=True)
     class Meta:
@@ -34,7 +33,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id','email','name','tc']
+        fields = ['id','email','name','tc','is_admin','is_active']
 
 
 class UserPasswordChangeSerializer(serializers.Serializer):
@@ -106,18 +105,43 @@ class UserPasswordResetSerializer(serializers.Serializer):
             raise serializers.ValidationError('Token is invalid')
 
 
-
-class ProductSerializer(serializers.ModelSerializer):
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Products
+        model = Category
         fields = '__all__'
-        
+
+
+class CategoryCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = '__all__'
+        extra_kwargs = {'created_at': {'read_only': True}}
+
+
 class ProductDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Products
-        fields = '__all__'
+        fields = ['id','name','price','description','image','category','created_at','updated_at','is_active']
+        depth = 1
 
 class ProductCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Products
-        fields = ['name','price','description','image','category','user']
+        fields = ['id','name','price','description','image','category','user']
+        extra_kwargs = {
+            'user': {'read_only': True}
+        }
+
+class ProductUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Products
+        fields = ['id','name','price','description','image','category']
+        extra_kwargs = {
+            'user': {'read_only': True}
+        }
+
+class ProductGetByCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Products
+        fields = ['id','name','price','description','image','category']
+        depth = 1

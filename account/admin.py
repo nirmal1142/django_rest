@@ -33,7 +33,7 @@ class UserModelAdmin(BaseUserAdmin):
 admin.site.register(User, UserModelAdmin)
 
 class ProductModelAdmin(admin.ModelAdmin):
-    list_display = ('id','name','price','category','created_at','updated_at','user')
+    list_display = ('id','name','price','created_at','updated_at','user')
     list_filter = ('category','created_at','updated_at')
     search_fields = ('name','price','category')
     ordering = ('name','price','category')

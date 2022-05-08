@@ -1,4 +1,5 @@
 from django.db import models
+import uuid
 from django.contrib.auth.models import BaseUserManager,AbstractBaseUser
 
 #  Custom User Manager
@@ -72,14 +73,31 @@ class User(AbstractBaseUser):
       # Simplest possible answer: All admins are staff
       return self.is_admin
 
+class Category(models.Model):
+  name = models.CharField(max_length=200)
+  id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+  created_at = models.DateTimeField(auto_now_add=True)
+  updated_at = models.DateTimeField(auto_now=True)
+  is_active = models.BooleanField(default=True)
+  is_deleted = models.BooleanField(default=False)
+
+  def __str__(self):
+    return self.name
+
+  class Meta:
+    ordering = ['-created_at']
+
+
 class Products(models.Model ):
   name = models.CharField(max_length=200)
+  id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
   price = models.IntegerField()
   description = models.TextField()
   created_at = models.DateTimeField(auto_now_add=True)
   updated_at = models.DateTimeField(auto_now=True)
   image = models.ImageField(upload_to='products/', blank=True)
-  category = models.ForeignKey('Category', on_delete=models.CASCADE)
+  category = models.ManyToManyField(Category, related_name='products')
+  # category = models.ForeignKey('Category', on_delete=models.CASCADE)
   user = models.ForeignKey('User', on_delete=models.CASCADE, blank=True, null=True)
   is_active = models.BooleanField(default=True)
   is_deleted = models.BooleanField(default=False)
@@ -94,15 +112,5 @@ class Products(models.Model ):
     return reverse('product-detail', kwargs={'pk': self.pk})
 
 
-class Category(models.Model):
-  name = models.CharField(max_length=200)
-  created_at = models.DateTimeField(auto_now_add=True)
-  updated_at = models.DateTimeField(auto_now=True)
-  is_active = models.BooleanField(default=True)
-  is_deleted = models.BooleanField(default=False)
 
-  def __str__(self):
-    return self.name
 
-  class Meta:
-    ordering = ['-created_at']
