@@ -40,9 +40,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    # 'django_filters',
     'rest_framework',
     'rest_framework_simplejwt',
     'account',
+    'dairymaster',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -60,17 +63,6 @@ ROOT_URLCONF = 'djangoauthapi.urls'
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-# CORS_ALLOW_HEADERS = [
-#     "accept",
-#     "accept-encoding",
-#     "authorization",
-#     "content-type",
-#     "dnt",
-#     "origin",
-#     "user-agent",
-#     "x-csrftoken",
-#     "x-requested-with",
-# ]
 
 TEMPLATES = [
     {
@@ -106,15 +98,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    # 'DEFAULT_PERMISSION_CLASSES': [
-    #     'rest_framework.permissions.AllowAny',
-    # ]
-    # 'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
-
-
-# Password validation
-# https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -167,11 +152,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 PASSWORD_RESET_TIMEOUT = 900   # 15 minutes
 
 SIMPLE_JWT = {
-    # 'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    # 'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    # 'ROTATE_REFRESH_TOKENS': False,
-    # 'BLACKLIST_AFTER_ROTATION': False,
-    # 'UPDATE_LAST_LOGIN': False,
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'UPDATE_LAST_LOGIN': False,
 
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
@@ -193,9 +178,9 @@ SIMPLE_JWT = {
 
     'JTI_CLAIM': 'jti',
 
-    # 'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    # 'SLIDING_TOKEN_LIFETIME': timedelta(minutes=50),
-    # 'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
+    'SLIDING_TOKEN_LIFETIME': timedelta(days=50),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
 

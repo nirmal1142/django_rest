@@ -4,6 +4,8 @@ from django.utils.encoding import smart_str , force_bytes , DjangoUnicodeDecodeE
 from django.utils.http import urlsafe_base64_decode , urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from account.utils import Util
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -119,6 +121,7 @@ class CategoryCreateSerializer(serializers.ModelSerializer):
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Products
         fields = ['id','name','price','description','image','category','created_at','updated_at','is_active']

@@ -97,7 +97,6 @@ class Products(models.Model ):
   updated_at = models.DateTimeField(auto_now=True)
   image = models.ImageField(upload_to='products/', blank=True)
   category = models.ManyToManyField(Category, related_name='products')
-  # category = models.ForeignKey('Category', on_delete=models.CASCADE)
   user = models.ForeignKey('User', on_delete=models.CASCADE, blank=True, null=True)
   is_active = models.BooleanField(default=True)
   is_deleted = models.BooleanField(default=False)
@@ -110,6 +109,7 @@ class Products(models.Model ):
 
   def get_absolute_url(self):
     return reverse('product-detail', kwargs={'pk': self.pk})
+
 
 
 

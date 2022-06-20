@@ -12,6 +12,7 @@ import io
 from rest_framework.parsers import JSONParser
 from rest_framework.renderers import JSONRenderer
 from django.http import HttpResponse
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 def get_token_for_user(user):
@@ -60,8 +61,10 @@ class UserProfileView(APIView):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 @renderer_classes([UserRender])
+# @filter_backends([DjangoFilterBackend])
 def get_user_list(request):
     users = User.objects.all()
+
     serializer = UserProfileSerializer(users,many=True)
     count  = len(serializer.data)
     data = {
@@ -104,7 +107,11 @@ class ProductListView(APIView):
         products = Products.objects.all()
         products = ProductDetailSerializer(products, many=True)
         if products:
-            return Response(products.data,status=status.HTTP_200_OK)
+            data = {
+                'products':products.data,
+                'count':len(products.data)
+            }
+            return Response(data,status=status.HTTP_200_OK)
         return Response({'msg':'No products found'},status=status.HTTP_404_NOT_FOUND)
 
 class ProductCreateView(APIView):
@@ -179,8 +186,6 @@ def product_detail(request,id):
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
 @api_view(['GET','POST'])
 @permission_classes([IsAuthenticated])
 @renderer_classes([UserRender])
@@ -189,13 +194,15 @@ def category_list(request):
         categories = Category.objects.all()
         categories = CategorySerializer(categories, many=True)
         if categories:
-            return Response(categories.data,status=status.HTTP_200_OK)
+            data = {
+                'categories':categories.data,
+                'count':len(categories.data)
+            }
+            return Response(data,status=status.HTTP_200_OK)
         return Response({'msg':'No categories found'},status=status.HTTP_404_NOT_FOUND)
     elif request.method == 'POST':
         user = request.user
-        print("user----",user)
         serializer = CategoryCreateSerializer(data=request.data)
-        print("serializer----",serializer)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             data = serializer.data
