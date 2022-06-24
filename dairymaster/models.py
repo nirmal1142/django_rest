@@ -1,7 +1,9 @@
 from django.db import models
 from django.utils import timezone
 import uuid
-
+# from djangoauthapi.account.models import User
+import sys
+from djangoauthapi.settings import AUTH_USER_MODEL
 # Create your models here.
 
 
@@ -67,6 +69,7 @@ class DairyMaster(models.Model):
     description = models.TextField(blank=True, null=True)
     dairy_to_company_milk = models.ManyToManyField(DairyToCompanyMilk ,related_name='dairy_to_company_milk')
     company_rate = models.ManyToManyField(CompanyRate, related_name='company_rate')
+    # user = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 

@@ -104,7 +104,9 @@ class ProductListView(APIView):
     renderer_clssses = [UserRender]
     permission_classes = [IsAuthenticated]
     def get(self,request,format=None):
-        products = Products.objects.all()
+        print(request.user)
+        products = Products.objects.filter(user=request.user)
+        print(products)
         products = ProductDetailSerializer(products, many=True)
         if products:
             data = {
@@ -118,7 +120,11 @@ class ProductCreateView(APIView):
     renderer_clssses = [UserRender]
     permission_classes = [IsAuthenticated]
     def post(self,request,format=None):
-        serializer = ProductCreateSerializer(data=request.data,context={'user':request.user})
+        print(request.user)
+        data = request.data
+        data['user'] = request.user
+        serializer = ProductCreateSerializer(data=data)
+        print("serializer",serializer)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             data = serializer.data
