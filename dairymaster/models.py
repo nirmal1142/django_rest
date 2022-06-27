@@ -4,6 +4,7 @@ import uuid
 # from djangoauthapi.account.models import User
 import sys
 from djangoauthapi.settings import AUTH_USER_MODEL
+from account.models import User
 # Create your models here.
 
 
@@ -70,6 +71,7 @@ class DairyMaster(models.Model):
     dairy_to_company_milk = models.ManyToManyField(DairyToCompanyMilk ,related_name='dairy_to_company_milk')
     company_rate = models.ManyToManyField(CompanyRate, related_name='company_rate')
     # user = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True , blank=True)
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 

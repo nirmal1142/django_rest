@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from dairymaster.serializers import DairyMasterSerializer ,CompanyProfileSerializer,DairyMasterUpdateSerializer,DairyToCompanyMilkSerializer,CompanyRateSerializer
+from dairymaster.serializers import DairyMasterGetSerializer,DairyMasterSerializer ,CompanyProfileSerializer,DairyMasterUpdateSerializer,DairyToCompanyMilkSerializer,CompanyRateSerializer
 from rest_framework.decorators import api_view  ,renderer_classes , permission_classes
 from rest_framework import status
 from dairymaster.renderers import UserRender
@@ -10,9 +10,19 @@ from dairymaster.models import DairyMaster ,CompanyProfile
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework.pagination import PageNumberPagination
-
+import json
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
+from account.models import User
+from uuid import UUID
+
+
+class UUIDEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, UUID):
+            # if the obj is uuid, we simply return the value of uuid
+            return obj.hex
+        return json.JSONEncoder.default(self, obj)
 
 
 
@@ -25,12 +35,16 @@ def get_token_for_user(user):
 
 @api_view(['GET', 'POST'])
 @renderer_classes([UserRender])
+@permission_classes([IsAuthenticated])
 def daily_milk_details_add(request , format=None):
     """
     List all code snippets, or create a new snippet.
     """
     if request.method == 'GET':
-        serializer = DairyMasterSerializer(DairyMaster.objects.all(), many=True)
+        user = request.user.id
+        # dairy_master = DairyMaster.objects.filter(user=user)
+        # print("dairy_master+++++",dairy_master)
+        serializer = DairyMasterGetSerializer(DairyMaster.objects.filter(user=user), many=True)
         if serializer.data:
             data ={
                 'status':'success',
@@ -41,7 +55,22 @@ def daily_milk_details_add(request , format=None):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'POST':
-        searializer = DairyMasterSerializer(data=request.data)
+
+        user = User.objects.get(id=request.user.id)
+
+        # print("user+++",user.id)
+        # user_id = json.dumps({'user':user.id})
+
+        # user_id = json.dumps(user, cls=UUIDEncoder)
+
+        print("user_id",request.user)
+
+        data = request.data
+        data['user'] = request.user.id
+        print(data)
+        searializer = DairyMasterSerializer(data=data)
+        # print(searializer)
+
         if searializer.is_valid(raise_exception=True):
             searializer.save()
             data = {

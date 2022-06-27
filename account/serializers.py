@@ -124,16 +124,16 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Products
-        fields = ['id','name','price','description','image','category','created_at','updated_at','is_active']
+        fields = ['id','name','price','description','image','category','created_at','updated_at','is_active','user_id']
         depth = 1
 
 class ProductCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Products
         fields = ['id','name','price','description','image','category','user']
-        extra_kwargs = {
-            'user': {'read_only': True}
-        }
+        # extra_kwargs = {
+        #     'user': {'read_only': True}
+        # }
 
 class ProductUpdateSerializer(serializers.ModelSerializer):
     class Meta:

@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.db.models import Sum
 from dairymaster.models import DairyMaster , CompanyRate ,DairyToCompanyMilk,CompanyProfile , RetailSellMilk
+import json
+from account.models import User
 
 
 class CompanyProfileSerializer(serializers.ModelSerializer):
@@ -23,26 +25,44 @@ class RetailSellMilkSerializer(serializers.ModelSerializer):
         model = RetailSellMilk
         fields = '__all__'
 
+class DairyMasterGetSerializer(serializers.ModelSerializer):
+    company_rate = CompanyRateSerializer(many=True)
+    dairy_to_company_milk = DairyToCompanyMilkSerializer(many=True)
+
+    class Meta:
+        model = DairyMaster
+        fields = ['id','company_rate','dairy_to_company_milk' ,'date','shift','profit','description']
+
 class DairyMasterSerializer(serializers.ModelSerializer):
     company_rate = CompanyRateSerializer(many=True)
     dairy_to_company_milk = DairyToCompanyMilkSerializer(many=True)
 
     class Meta:
         model = DairyMaster
-        fields = '__all__'
-        depth = 1
+        fields = ['id','company_rate','dairy_to_company_milk' ,'date','shift','profit','description','user']
+        # depth = 1
 
     def create(self, validated_data):
+
+        print("validated_data",validated_data)
 
         date = validated_data.get('date')
         shift = validated_data.get('shift')
         dairy_master = DairyMaster.objects.filter(date=date,shift=shift)
+        # print("dairy_master", dairy_master)
+        user = validated_data.get('user')
+        user_details = User.objects.filter(email=user)
+        print("user", user_details)
+
         if dairy_master:
             raise serializers.ValidationError("Dairy Master Already Exists")
         else:
             company_rate_data = validated_data.pop('company_rate')
             dairy_to_company_milk_data = validated_data.pop('dairy_to_company_milk')
+            user = validated_data.__dict__.pop('user')
+            print("user",user)
             dairy_master = DairyMaster.objects.create(**validated_data)
+
 
             for company_rate in company_rate_data:
                 price = company_rate['liter'] * company_rate['rate'] * company_rate['fat']
