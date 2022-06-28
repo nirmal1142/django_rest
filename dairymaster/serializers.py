@@ -40,29 +40,19 @@ class DairyMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = DairyMaster
         fields = ['id','company_rate','dairy_to_company_milk' ,'date','shift','profit','description','user']
-        # depth = 1
 
     def create(self, validated_data):
-
-        print("validated_data",validated_data)
-
         date = validated_data.get('date')
         shift = validated_data.get('shift')
-        dairy_master = DairyMaster.objects.filter(date=date,shift=shift)
-        # print("dairy_master", dairy_master)
         user = validated_data.get('user')
-        user_details = User.objects.filter(email=user)
-        print("user", user_details)
+        dairy_master = DairyMaster.objects.filter(date=date,shift=shift,user=user)
 
         if dairy_master:
             raise serializers.ValidationError("Dairy Master Already Exists")
         else:
             company_rate_data = validated_data.pop('company_rate')
             dairy_to_company_milk_data = validated_data.pop('dairy_to_company_milk')
-            user = validated_data.__dict__.pop('user')
-            print("user",user)
             dairy_master = DairyMaster.objects.create(**validated_data)
-
 
             for company_rate in company_rate_data:
                 price = company_rate['liter'] * company_rate['rate'] * company_rate['fat']
@@ -78,14 +68,6 @@ class DairyMasterSerializer(serializers.ModelSerializer):
             dairy_master.profit = profite
             dairy_master.save()
             return dairy_master
-
-    def delete(self, request, pk, format=None):
-        dairy_master = DairyMaster.objects.get(pk=pk)
-        dairy_master.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-
 
 
 
@@ -111,56 +93,7 @@ class DairyMasterUpdateSerializer(serializers.ModelSerializer):
 
         print(company_rate_data_same_instance)
 
-        # for company_rate in company_rate_data:
-        #     print(company_rate)
-        #     if 'id' in company_rate.keys():
-        #         if CompanyRate.objects.filter(id=company_rate['id']).exists():
-        #             company_rate_instance = CompanyRate.objects.get(id=company_rate['id'])
-        #             company_rate_instance.rate = company_rate.get('rate', company_rate_instance.rate)
-        #             company_rate_instance.milk_type = company_rate.get('milk_type', company_rate_instance.milk_type)
-        #             company_rate_instance.liter = company_rate.get('liter', company_rate_instance.liter)
-        #             company_rate_instance.fat = company_rate.get('fat', company_rate_instance.fat)
-        #
-        #             company_rate_instance.price = company_rate['liter'] * company_rate['rate'] * company_rate['fat']
-        #             company_rate_same_id.append(company_rate_instance.id)
-        #
-        #         else:
-        #             continue
-        #     else:
-        #         company_rate_instance = CompanyRate.objects.create(rate=company_rate['rate'],milk_type=company_rate['milk_type'],liter=company_rate['liter'],fat=company_rate['fat'],price=company_rate['liter'] * company_rate['rate'] * company_rate['fat'],mainId=instance.id ,**company_rate)
-        #         company_rate_same_id.append(company_rate_instance.id)
-        #
-        # for company_rate_id in company_rate_data_same_instance:
-        #     if company_rate_id not in company_rate_same_id:
-        #         company_rate_instance = CompanyRate.objects.get(id=company_rate_id)
-        #         company_rate_instance.delete()
 
-
-        # company_rate_ids = []
-        #
-        # for company_rate in company_rate_data:
-
-
-
-        # instance.date = validated_data.get('date', instance.date)
-        # instance.shift = validated_data.get('shift', instance.shift)
-        # instance.description = validated_data.get('description', instance.description)
-        # instance.save()
-
-        # company_rate_data_with_same_id =CompanyRate.objects.filter(dairy_master=instance)
-
-        # company_rate_data = validated_data.pop('company_rate',[])
-        # print(company_rate_data)
-        # dairy_to_company_milk_data = validated_data.pop('dairy_to_company_milk',[])
-        # dairy_master = super().update(instance, validated_data)
-
-        # print(validated_data['company_rate'])
-
-        # for company_rate in validated_data['company_rate']:
-        #     print('company_rate',company_rate)
-            # rate = CompanyRate.objects.get(pk=company_rate.get('id'))
-            # print(rate)
-            # instance.company_rate.add(rate)
 
         return dairy_master
 

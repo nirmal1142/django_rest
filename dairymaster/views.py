@@ -9,20 +9,13 @@ from rest_framework.views import APIView
 from dairymaster.models import DairyMaster ,CompanyProfile
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
-from rest_framework.pagination import PageNumberPagination
+# from rest_framework.pagination import PageNumberPagination
 import json
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from account.models import User
 from uuid import UUID
-
-
-class UUIDEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, UUID):
-            # if the obj is uuid, we simply return the value of uuid
-            return obj.hex
-        return json.JSONEncoder.default(self, obj)
+from .pagination import DairyMasterPagination
 
 
 
@@ -33,17 +26,19 @@ def get_token_for_user(user):
         'access':str(refresh.access_token),
     }
 
+# class DairyMasterPagination(PageNumberPagination):
+#     page_size = 10
+#     page_size_query_param = 'page_size'
+#     max_page_size = 100
+
 @api_view(['GET', 'POST'])
 @renderer_classes([UserRender])
-@permission_classes([IsAuthenticated])
 def daily_milk_details_add(request , format=None):
     """
     List all code snippets, or create a new snippet.
     """
     if request.method == 'GET':
         user = request.user.id
-        # dairy_master = DairyMaster.objects.filter(user=user)
-        # print("dairy_master+++++",dairy_master)
         serializer = DairyMasterGetSerializer(DairyMaster.objects.filter(user=user), many=True)
         if serializer.data:
             data ={
@@ -55,28 +50,15 @@ def daily_milk_details_add(request , format=None):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'POST':
-
-        user = User.objects.get(id=request.user.id)
-
-        # print("user+++",user.id)
-        # user_id = json.dumps({'user':user.id})
-
-        # user_id = json.dumps(user, cls=UUIDEncoder)
-
-        print("user_id",request.user)
-
         data = request.data
         data['user'] = request.user.id
-        print(data)
         searializer = DairyMasterSerializer(data=data)
-        # print(searializer)
-
         if searializer.is_valid(raise_exception=True):
             searializer.save()
             data = {
                 'message': 'Daily Milk Details Added Successfully',
                 'status': 'success',
-                'data': searializer.data
+                # 'data': searializer.data
             }
             return Response(data, status=status.HTTP_201_CREATED)
         return Response(searializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -161,56 +143,32 @@ def daily_milk_details_update_delete(request, format=None):
             'message': 'Daily Milk Details Deleted Successfully',
             'status': 'success'
         }
-        return Response(data, status=status.HTTP_204_NO_CONTENT)
+        return Response(data, status=status.HTTP_200_OK)
 
 
+# class DairyMasterPagination(PageNumberPagination):
+#     page_size = 10
+#     page_size_query_param = 'page_size'
+#     max_page_size = 1000
 
 
-
-@api_view(['POST'])
-@renderer_classes([UserRender])
-def daily_milk_details_get_by_many_date(request, format=None):
-
-    try :
-        if request.data:
-            dairy_master = DairyMaster.objects.filter(date__in=request.data)
-        else:
-            dairy_master = DairyMaster.objects.all()
-    except DairyMaster.DoesNotExist:
-        return Response({'message':'not found'},status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'POST':
-        serializer = DairyMasterSerializer(dairy_master, many=True)
-        print(serializer)
-        if serializer.data:
+class DairyMasterGetByManyDate(APIView):
+    renderer_clssses = [UserRender]
+    permission_classes = [IsAuthenticated]
+    def post(self, request, format=None):
+        try:
+            if request.data:
+                dairy_master = DairyMaster.objects.filter(date__in=request.data, user=request.user.id)
+            else:
+                dairy_master = DairyMaster.objects.filter(user=request.user.id)
+        except DairyMaster.DoesNotExist:
+            return Response({'message':'not found'},status=status.HTTP_404_NOT_FOUND)
+        if dairy_master not in []:
+            serializer = DairyMasterGetSerializer(dairy_master, many=True)
             data ={
                 'status':'success',
                 'data':serializer.data,
                 'count':len(serializer.data)
             }
             return Response(data , status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-
-@api_view(['GET','POST'])
-@renderer_classes([UserRender])
-def company_profile(request , format=None):
-    """
-    List all code snippets, or create a new snippet.
-    """
-    if request.method == 'GET':
-        snippets = CompanyProfile.objects.all()
-        serializer = CompanyProfileSerializer(snippets, many=True)
-        print(serializer.data)
-        if serializer.data:
-            return Response(serializer.data , status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    elif request.method == 'POST':
-        searializer = CompanyProfileSerializer(data=request.data)
-        if searializer.is_valid(raise_exception=True):
-            searializer.save()
-            return Response(searializer.data, status=status.HTTP_201_CREATED)
-        return Response(searializer.errors, status=status.HTTP_400_BAD_REQUEST)
