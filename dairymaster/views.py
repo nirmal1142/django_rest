@@ -7,8 +7,8 @@ from dairymaster.renderers import UserRender
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from dairymaster.models import DairyMaster ,CompanyProfile
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters
+# from django_filters.rest_framework import DjangoFilterBackend
+# from rest_framework import filters
 # from rest_framework.pagination import PageNumberPagination
 import json
 from rest_framework_simplejwt.tokens import RefreshToken

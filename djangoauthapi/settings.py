@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'account',
     'dairymaster',
-    'django_filters',
+    # 'django_filters',
 ]
 
 MIDDLEWARE = [
