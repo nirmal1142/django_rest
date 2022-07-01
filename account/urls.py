@@ -1,5 +1,5 @@
 from django.urls import path, include, re_path
-from account.views import get_user_list,get_product_by_category,product_is_active, product_detail,ProductGetByCategoryView,  category_list,category_delete, SendPasswordResetEmailView,ProductCreateView,ProductListView, UserLoginView, UserPasswordChangeView, UserPasswordResetView, UserProfileView, UserRegistrationView
+from account.views import get_user_list,get_product_by_category,product_is_active,get_api_test, product_detail,ProductGetByCategoryView,  category_list,category_delete, SendPasswordResetEmailView,ProductCreateView,ProductListView, UserLoginView, UserPasswordChangeView, UserPasswordResetView, UserProfileView, UserRegistrationView
 from rest_framework_swagger.renderers import SwaggerUIRenderer, OpenAPIRenderer
 
 
@@ -24,6 +24,7 @@ urlpatterns = [
     path('product-update/<id>/', product_detail, name='product-update'),
     path('product-get-by-category/<category>/', get_product_by_category, name='product-get-by-category'),
     path('product-is-active/<id>/', product_is_active, name='product-is-active'),
+    path('api-test/', get_api_test, name='api-test'),
 
 
 ]
