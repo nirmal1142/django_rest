@@ -242,4 +242,3 @@ def category_delete(request,pk):
 @api_view(['GET'])
 def get_api_test(request):
     return Response({'msg':'API is working'},status=status.HTTP_200_OK)
-
