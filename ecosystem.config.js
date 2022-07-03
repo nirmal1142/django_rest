@@ -1,6 +1,6 @@
 module.exports = {
     apps: [{
         name: 'djangoauthapi',
-        script: "python3 manage.py runserver"
+        script: "python3 manage.py runserver 0.0.0.0:8000",
     }]
 }
