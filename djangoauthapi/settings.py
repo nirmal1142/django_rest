@@ -189,3 +189,6 @@ SIMPLE_JWT = {
 # STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
 # STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+SECURE_SSL_REDIRECT=False
+SESSION_COOKIE_SECURE=False
+CSRF_COOKIE_SECURE=False
