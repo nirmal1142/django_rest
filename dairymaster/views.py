@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from dairymaster.serializers import DairyMasterGetSerializer,DairyMasterSerializer ,CompanyProfileSerializer,DairyMasterUpdateSerializer,DairyToCompanyMilkSerializer,CompanyRateSerializer
+from dairymaster.serializers import DairyMasterGetSerializer,DairyMasterSerializer ,DairyMasterUpdateSerializer,milkMonthlyReportSerializer
 from rest_framework.decorators import api_view  ,renderer_classes , permission_classes
 from rest_framework import status
 from dairymaster.renderers import UserRender
@@ -16,6 +16,9 @@ from rest_framework.permissions import IsAuthenticated
 from account.models import User
 from uuid import UUID
 from .pagination import DairyMasterPagination
+import datetime
+from rest_framework import fields, generics, permissions, views
+
 
 
 
@@ -25,11 +28,6 @@ def get_token_for_user(user):
         'refresh':str(refresh),
         'access':str(refresh.access_token),
     }
-
-# class DairyMasterPagination(PageNumberPagination):
-#     page_size = 10
-#     page_size_query_param = 'page_size'
-#     max_page_size = 100
 
 @api_view(['GET', 'POST'])
 @renderer_classes([UserRender])
@@ -107,7 +105,7 @@ class DairyMasterFindByDate(APIView):
             return Response(data , status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET', 'PUT', 'DELETE'])
+@api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 @renderer_classes([UserRender])
 def daily_milk_details_update_delete(request, format=None):
@@ -125,17 +123,6 @@ def daily_milk_details_update_delete(request, format=None):
     except DairyMaster.DoesNotExist:
         return Response({'message':'not found'},status=status.HTTP_404_NOT_FOUND)
 
-    if request.method == 'GET':
-        serializer = DairyMasterSerializer(dairy_master, many=True)
-
-        if serializer:
-            data ={
-                'status':'success',
-                'data':serializer.data,
-                'count':len(serializer.data)
-            }
-            return Response(data , status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     if request.method == 'DELETE':
         dairy_master = DairyMaster.objects.get(id=request.query_params.get('id'))
         dairy_master.delete()
@@ -146,10 +133,15 @@ def daily_milk_details_update_delete(request, format=None):
         return Response(data, status=status.HTTP_200_OK)
 
 
-# class DairyMasterPagination(PageNumberPagination):
-#     page_size = 10
-#     page_size_query_param = 'page_size'
-#     max_page_size = 1000
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@renderer_classes([UserRender])
+def daily_milk_details_get_by_month(request, format=None):
+    pass
+
+
+
 
 
 class DairyMasterGetByManyDate(APIView):
@@ -172,3 +164,107 @@ class DairyMasterGetByManyDate(APIView):
             }
             return Response(data , status=status.HTTP_200_OK)
 
+
+class MonthlyReportView(generics.ListAPIView):
+    serializer_class = milkMonthlyReportSerializer
+    renderer_classes = [UserRender]
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        try:
+            if request.query_params.get('date'):
+                date = request.query_params.get('date')
+                date = datetime.datetime.strptime(date, "%Y-%m-%d")
+                date = date.date()
+                dairy_master = DairyMaster.objects.filter(date__month=date.month, date__year=date.year, user=request.user.id)
+            else:
+                dairy_master = DairyMaster.objects.filter(user=request.user.id)
+        except DairyMaster.DoesNotExist:
+            return Response({'message':'not found'},status=status.HTTP_404_NOT_FOUND)
+        if dairy_master not in []:
+            serializer = milkMonthlyReportSerializer(dairy_master, many=True)
+            profit = 0
+            for i in serializer.data:
+                profit += i['profit']
+
+
+            ######  Dairy to company data
+
+            dairy_to_company_total_liters = 0
+            for i in serializer.data:
+                for j in i['dairy_to_company_milk'] :
+                    dairy_to_company_total_liters += j['liter']
+
+            dairy_to_company_total_amount = 0
+            for i in serializer.data:
+                for j in i['dairy_to_company_milk'] :
+                    dairy_to_company_total_amount += j['price']
+
+            max_fat = 0
+            for i in serializer.data:
+                for j in i['dairy_to_company_milk'] :
+                    if j['fat'] > max_fat:
+                        max_fat = j['fat']
+
+            ######  Company to dairy data
+            
+            company_to_dairy_total_liters = 0
+            for i in serializer.data:
+                for j in i['company_rate'] :
+                    company_to_dairy_total_liters += j['liter']
+
+            company_to_dairy_total_amount = 0
+            for i in serializer.data:
+                for j in i['company_rate'] :
+                    company_to_dairy_total_amount += j['price']
+
+            max_fat_company = 0
+            for i in serializer.data:
+                for j in i['company_rate'] :
+                    if j['fat'] > max_fat_company:
+                        max_fat_company = j['fat']
+                    
+
+            dairy_data = {
+                'total_liters':dairy_to_company_total_liters,
+                'total_amount':dairy_to_company_total_amount,
+                'max_fat':max_fat
+            }
+            company_data = {
+                'total_liters':company_to_dairy_total_liters,
+                'total_amount':company_to_dairy_total_amount,
+                'max_fat':max_fat_company
+            }
+            profit ={
+                'profit':profit,
+                'liter_profit': company_to_dairy_total_liters - dairy_to_company_total_liters
+            }
+            data ={
+                'status':'success',
+                'data':serializer.data,
+                "dairy_data":dairy_data,
+                "company_data":company_data,
+                'profit':profit,
+                'count':len(serializer.data)
+            }
+            return Response(data , status=status.HTTP_200_OK)
+            
+
+class MilkProfitByMonth(APIView):
+    renderer_classes = [UserRender]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, format=None):
+        try:
+            if request.query_params.get('month'):
+                dairy_master = DairyMaster.objects.filter(date__month=request.query_params.get('month'), user=request.user.id)
+            else:
+                dairy_master = DairyMaster.objects.filter(user=request.user.id)
+        except DairyMaster.DoesNotExist:
+            return Response({'message':'not found'},status=status.HTTP_404_NOT_FOUND)
+        if dairy_master not in []:
+            serializer = DairyMasterGetSerializer(dairy_master, many=True)
+            data ={
+                'status':'success',
+                'data':serializer.data,
+                'count':len(serializer.data)
+            }
+            return Response(data , status=status.HTTP_200_OK)

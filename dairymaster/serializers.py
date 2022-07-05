@@ -98,3 +98,25 @@ class DairyMasterUpdateSerializer(serializers.ModelSerializer):
         return dairy_master
 
             
+class milkMonthlyReportSerializer(serializers.ModelSerializer):
+    company_rate = CompanyRateSerializer(many=True)
+    dairy_to_company_milk = DairyToCompanyMilkSerializer(many=True)
+
+    class Meta:
+        model = DairyMaster
+        fields = ['id','company_rate','dairy_to_company_milk' ,'date','shift','profit','description']
+
+    # def get(self, request, *args, **kwargs):
+    #     month = request.GET.get('month')
+    #     year = request.GET.get('year')
+    #     user = request.GET.get('user')
+    #     if month and year and user:
+    #         dairy_master = DairyMaster.objects.filter(date__month=month,date__year=year,user=user)
+    #         serializer = self.get_serializer(dairy_master,many=True)
+    #         print("total_profit",serializer.data)
+
+    #         return serializer.data
+    #     else:
+    #         return []
+
+        
