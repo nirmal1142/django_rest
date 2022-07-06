@@ -1,5 +1,5 @@
 from django.urls import path, include, re_path
-from dairymaster.views import daily_milk_details_add ,DairyMasterGetByManyDate,daily_milk_details_update_delete,DailyMilkDetailGetById,DairyMasterUpdateView,daily_milk_details_get_by_month, MonthlyReportView
+from dairymaster.views import daily_milk_details_add ,GetAllReportsCardView,GetOneDetailByIdView,DairyMasterGetByManyDate,daily_milk_details_update_delete,DailyMilkDetailGetById,DairyMasterUpdateView,daily_milk_details_get_by_month, MonthlyReportView
 
 urlpatterns = [
     path('daily-milk-details-add/', daily_milk_details_add, name='daily_milk_details_add'),
@@ -9,6 +9,8 @@ urlpatterns = [
     path('daily-milk-details-get-by-date', DairyMasterGetByManyDate.as_view(), name='daily_milk_details_get_by_many_date'),
     path('daily-milk-details-get-by-month', daily_milk_details_get_by_month, name='daily_milk_details_get_by_month'),
     path('monthly-report', MonthlyReportView.as_view(), name='monthly_report'),
+    path('daily-milk-details-get-by-id/<pk>', GetOneDetailByIdView.as_view(), name='daily_milk_details_get_by_id'),
+    path('get-all-reports-card', GetAllReportsCardView.as_view(), name='get_all_reports_card'),
 
 
 ]

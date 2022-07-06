@@ -165,6 +165,8 @@ class DairyMasterGetByManyDate(APIView):
             return Response(data , status=status.HTTP_200_OK)
 
 
+
+
 class MonthlyReportView(generics.ListAPIView):
     serializer_class = milkMonthlyReportSerializer
     renderer_classes = [UserRender]
@@ -177,7 +179,7 @@ class MonthlyReportView(generics.ListAPIView):
                 date = date.date()
                 dairy_master = DairyMaster.objects.filter(date__month=date.month, date__year=date.year, user=request.user.id)
             else:
-                dairy_master = DairyMaster.objects.filter(user=request.user.id)
+                dairy_master = []
         except DairyMaster.DoesNotExist:
             return Response({'message':'not found'},status=status.HTTP_404_NOT_FOUND)
         if dairy_master not in []:
@@ -247,7 +249,131 @@ class MonthlyReportView(generics.ListAPIView):
                 'count':len(serializer.data)
             }
             return Response(data , status=status.HTTP_200_OK)
-            
+
+class GetOneDetailByIdView(generics.RetrieveAPIView):
+    serializer_class = DairyMasterGetSerializer
+    renderer_classes = [UserRender]
+    permission_classes = [IsAuthenticated]
+    def get(self,request,*args,**kwargs):
+        pk = kwargs['pk']
+        try:
+            dairy_master = DairyMaster.objects.get(pk=pk , user=request.user.id)
+        except DairyMaster.DoesNotExist:
+            return Response({'message':'not found'},status=status.HTTP_404_NOT_FOUND)
+        serializer = DairyMasterGetSerializer(dairy_master)
+        data ={
+            'status':'success',
+            'data':serializer.data
+        }
+        return Response(data , status=status.HTTP_200_OK)
+
+class GetAllReportsCardView(generics.RetrieveAPIView):
+    serializer_class = milkMonthlyReportSerializer
+    renderer_classes = [UserRender]
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        try:
+            dairy_master = DairyMaster.objects.filter(user=request.user.id)
+        except DairyMaster.DoesNotExist:
+            return Response({'message':'not found'},status=status.HTTP_404_NOT_FOUND)
+        if dairy_master not in []:
+            serializer = milkMonthlyReportSerializer(dairy_master, many=True)
+            all_data = serializer.data
+            today = datetime.datetime.now()
+            today = today.date()
+            strDate = today.strftime("%Y-%m-%d")
+            strMonth = today.strftime("%Y-%m")
+            strYear = today.strftime("%Y")
+
+            today_data = []
+            for i in all_data:
+                if i['date'] == strDate:
+                    today_data.append(i)
+
+            monthly_data = []
+            for i in all_data:
+                if i['date'].startswith(strMonth):
+                    monthly_data.append(i)
+
+            yearly_data = []
+            for i in all_data:
+                if i['date'].startswith(strYear):
+                    yearly_data.append(i)
+
+            today_profit = 0
+            for i in today_data:
+                today_profit += i['profit']
+
+            monthly_profit = 0
+            for i in monthly_data:
+                monthly_profit += i['profit']
+
+            yearly_profit = 0
+            for i in yearly_data:
+                yearly_profit += i['profit']
+
+            total_profit = 0
+            for i in all_data:
+                total_profit += i['profit']
+
+            dairy_to_company_total_liters = 0
+            for i in all_data:
+                for j in i['dairy_to_company_milk'] :
+                    dairy_to_company_total_liters += j['liter']
+
+            dairy_to_company_total_amount = 0
+            for i in all_data:
+                for j in i['dairy_to_company_milk'] :
+                    dairy_to_company_total_amount += j['price']
+
+            company_to_dairy_total_liters = 0
+            for i in all_data:
+                for j in i['company_rate'] :
+                    company_to_dairy_total_liters += j['liter']
+
+            company_to_dairy_total_amount = 0
+            for i in all_data:
+                for j in i['company_rate'] :
+                    company_to_dairy_total_amount += j['price']
+
+            dairy_to_company_monthly_liters = 0
+            for i in monthly_data:
+                for j in i['dairy_to_company_milk'] :
+                    dairy_to_company_monthly_liters += j['liter']
+
+            dairy_to_company_monthly_amount = 0
+            for i in monthly_data:
+                for j in i['dairy_to_company_milk'] :
+                    dairy_to_company_monthly_amount += j['price']
+
+            company_to_dairy_monthly_liters = 0
+            for i in monthly_data:
+                for j in i['company_rate'] :
+                    company_to_dairy_monthly_liters += j['liter']
+
+            company_to_dairy_monthly_amount = 0
+            for i in monthly_data:
+                for j in i['company_rate'] :
+                    company_to_dairy_monthly_amount += j['price']
+
+            data ={
+                'status':'success',
+                'today_profit':today_profit,
+                'monthly_profit':monthly_profit,
+                'yearly_profit':yearly_profit,
+                'total_profit':total_profit,
+                'dairy_to_company_total_liters':dairy_to_company_total_liters,
+                'dairy_to_company_total_amount':dairy_to_company_total_amount,
+                'company_to_dairy_total_liters':company_to_dairy_total_liters,
+                'company_to_dairy_total_amount':company_to_dairy_total_amount,
+                'dairy_to_company_monthly_liters':dairy_to_company_monthly_liters,
+                'dairy_to_company_monthly_amount':dairy_to_company_monthly_amount,
+                'company_to_dairy_monthly_liters':company_to_dairy_monthly_liters,
+                'company_to_dairy_monthly_amount':company_to_dairy_monthly_amount,
+                'count':len(serializer.data)
+            }
+            return Response(data , status=status.HTTP_200_OK)
+
 
 class MilkProfitByMonth(APIView):
     renderer_classes = [UserRender]

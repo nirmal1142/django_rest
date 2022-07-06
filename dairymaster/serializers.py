@@ -97,6 +97,10 @@ class DairyMasterUpdateSerializer(serializers.ModelSerializer):
 
         return dairy_master
 
+
+
+
+
             
 class milkMonthlyReportSerializer(serializers.ModelSerializer):
     company_rate = CompanyRateSerializer(many=True)
