@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.db.models import Sum
-from dairymaster.models import DairyMaster , CompanyRate ,DairyToCompanyMilk,CompanyProfile , RetailSellMilk
+from dairymaster.models import DairyMaster , CompanyRate ,DairyToCompanyMilk,CompanyProfile , RetailSellMilk , RetailRate
 import json
 from account.models import User
 
@@ -39,7 +39,7 @@ class DairyMasterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DairyMaster
-        fields = ['id','company_rate','dairy_to_company_milk' ,'date','shift','profit','description','user']
+        fields = ['id','company_rate','dairy_to_company_milk' ,'date','shift','profit','description']
 
     def create(self, validated_data):
         date = validated_data.get('date')
@@ -69,39 +69,7 @@ class DairyMasterSerializer(serializers.ModelSerializer):
             dairy_master.save()
             return dairy_master
 
-
-
-class DairyMasterUpdateSerializer(serializers.ModelSerializer):
-    company_rate = CompanyRateSerializer(many=True)
-    dairy_to_company_milk = DairyToCompanyMilkSerializer(many=True)
-
-    class Meta:
-        model = DairyMaster
-        fields = '__all__'
-        depth = 1
-
-    def update(self, instance, validated_data):
-
-        company_rate_data = validated_data.pop('company_rate')
-        dairy_to_company_milk_data = validated_data.pop('dairy_to_company_milk')
-
-
-        company_rate_data_same_instance = CompanyRate.objects.filter(mainId=instance.id).values_list('id', flat=True)
-
-
-        company_rate_same_id = []
-
-        print(company_rate_data_same_instance)
-
-
-
-        return dairy_master
-
-
-
-
-
-            
+    
 class milkMonthlyReportSerializer(serializers.ModelSerializer):
     company_rate = CompanyRateSerializer(many=True)
     dairy_to_company_milk = DairyToCompanyMilkSerializer(many=True)
@@ -110,17 +78,35 @@ class milkMonthlyReportSerializer(serializers.ModelSerializer):
         model = DairyMaster
         fields = ['id','company_rate','dairy_to_company_milk' ,'date','shift','profit','description']
 
-    # def get(self, request, *args, **kwargs):
-    #     month = request.GET.get('month')
-    #     year = request.GET.get('year')
-    #     user = request.GET.get('user')
-    #     if month and year and user:
-    #         dairy_master = DairyMaster.objects.filter(date__month=month,date__year=year,user=user)
-    #         serializer = self.get_serializer(dairy_master,many=True)
-    #         print("total_profit",serializer.data)
-
-    #         return serializer.data
-    #     else:
-    #         return []
-
         
+class RetailRateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RetailRate
+        fields = ['id','rate','milk_type']
+
+    def create(self , validated_data):
+        milk_type = validated_data.get('milk_type')
+        user = validated_data.get('user')
+
+        retail_rate = RetailRate.objects.filter(milk_type=milk_type,user=user)
+
+        if retail_rate:
+            raise serializers.ValidationError("Retail Rate Already Exists")
+        else:
+            retail_rate = RetailRate.objects.create(**validated_data)
+            return retail_rate
+
+    def update(self , instance , validated_data):
+        milk_type = validated_data.get('milk_type')
+        rate = validated_data.get('rate')
+        user = validated_data.get('user')
+
+        retail_rate = RetailRate.objects.filter(milk_type=milk_type,user=user , rate=rate)
+
+        if retail_rate:
+            raise serializers.ValidationError("Retail Rate Already Exists")
+        else:
+            instance.rate = validated_data.get('rate')
+            instance.milk_type = validated_data.get('milk_type')
+            instance.save()
+            return instance

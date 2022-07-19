@@ -78,7 +78,16 @@ class DairyMaster(models.Model):
     def __str__(self):
         return self.shift
 
+class RetailRate(models.Model):
+    milk_type = models.CharField(max_length=50, blank=False, null=False)
+    rate = models.FloatField(blank=False, null=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True , blank=True)
+    update_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.milk_type
 
 
 

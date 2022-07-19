@@ -1,12 +1,12 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from dairymaster.serializers import DairyMasterGetSerializer,DairyMasterSerializer ,DairyMasterUpdateSerializer,milkMonthlyReportSerializer
+from dairymaster.serializers import DairyMasterGetSerializer,DairyMasterSerializer,milkMonthlyReportSerializer,RetailRateSerializer
 from rest_framework.decorators import api_view  ,renderer_classes , permission_classes
 from rest_framework import status
 from dairymaster.renderers import UserRender
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from dairymaster.models import DairyMaster ,CompanyProfile
+from dairymaster.models import DairyMaster ,CompanyProfile,RetailRate ,CompanyRate,DairyToCompanyMilk
 # from django_filters.rest_framework import DjangoFilterBackend
 # from rest_framework import filters
 # from rest_framework.pagination import PageNumberPagination
@@ -31,6 +31,7 @@ def get_token_for_user(user):
 
 @api_view(['GET', 'POST'])
 @renderer_classes([UserRender])
+@permission_classes([IsAuthenticated])
 def daily_milk_details_add(request , format=None):
     """
     List all code snippets, or create a new snippet.
@@ -60,24 +61,6 @@ def daily_milk_details_add(request , format=None):
             }
             return Response(data, status=status.HTTP_201_CREATED)
         return Response(searializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class DairyMasterUpdateView(APIView):
-    def put(self, request, pk, format=None):
-        dairy_master = DairyMaster.objects.get(pk=pk)
-        serializer = DairyMasterUpdateSerializer(dairy_master, data=request.data)
-        print(serializer)
-
-        # print("serializer",serializer)
-        if serializer.is_valid():
-            serializer.save()
-            data = {
-                'message': 'Daily Milk Details Updated Successfully',
-                'status': 'success',
-                'data': serializer.data
-            }
-            return Response(data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DailyMilkDetailGetById(APIView):
     def get(self, request, pk, format=None):
@@ -165,8 +148,6 @@ class DairyMasterGetByManyDate(APIView):
             return Response(data , status=status.HTTP_200_OK)
 
 
-
-
 class MonthlyReportView(generics.ListAPIView):
     serializer_class = milkMonthlyReportSerializer
     renderer_classes = [UserRender]
@@ -249,23 +230,6 @@ class MonthlyReportView(generics.ListAPIView):
                 'count':len(serializer.data)
             }
             return Response(data , status=status.HTTP_200_OK)
-
-class GetOneDetailByIdView(generics.RetrieveAPIView):
-    serializer_class = DairyMasterGetSerializer
-    renderer_classes = [UserRender]
-    permission_classes = [IsAuthenticated]
-    def get(self,request,*args,**kwargs):
-        pk = kwargs['pk']
-        try:
-            dairy_master = DairyMaster.objects.get(pk=pk , user=request.user.id)
-        except DairyMaster.DoesNotExist:
-            return Response({'message':'not found'},status=status.HTTP_404_NOT_FOUND)
-        serializer = DairyMasterGetSerializer(dairy_master)
-        data ={
-            'status':'success',
-            'data':serializer.data
-        }
-        return Response(data , status=status.HTTP_200_OK)
 
 class GetAllReportsCardView(generics.RetrieveAPIView):
     serializer_class = milkMonthlyReportSerializer
@@ -394,3 +358,95 @@ class MilkProfitByMonth(APIView):
                 'count':len(serializer.data)
             }
             return Response(data , status=status.HTTP_200_OK)
+
+
+class RetailRateView(APIView):
+    renderer_classes = [UserRender]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, format=None):
+        try:
+            retail_rate = RetailRate.objects.filter(user=request.user.id)
+            print("retail_rate",retail_rate)
+        except RetailRate.DoesNotExist:
+            return Response({'message':'not found'},status=status.HTTP_404_NOT_FOUND)
+        if retail_rate not in []:
+            serializer = RetailRateSerializer(retail_rate, many=True)
+            data ={
+                'status':'success',
+                'data':serializer.data,
+                'count':len(serializer.data)
+            }
+            return Response(data , status=status.HTTP_200_OK)
+    def post(self, request, format=None):
+        serializer = RetailRateSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, format=None):
+        try:
+            retail_rate = RetailRate.objects.get(user=request.user.id , milk_type = request.data['milk_type'])
+        except RetailRate.DoesNotExist:
+            return Response({'message':'not found'},status=status.HTTP_404_NOT_FOUND)
+        serializer = RetailRateSerializer(retail_rate, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, format=None):
+        try:
+            retail_rate = RetailRate.objects.get(user=request.user.id , id=request.query_params.get('id'))
+        except RetailRate.DoesNotExist:
+            return Response({'message':'not found'},status=status.HTTP_404_NOT_FOUND)
+        retail_rate.delete()
+        return Response({'message':"success"},status=status.HTTP_200_OK)
+        
+
+class DairyMasterUpdateView(APIView):
+    renderer_classes = [UserRender]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, format=None):
+        try:
+            if request.query_params.get('id'):
+                dairy_master = DairyMaster.objects.filter(id=request.query_params.get('id'))
+            else: 
+                dairy_master = DairyMaster.objects.filter(user=request.user.id)
+        except DairyMaster.DoesNotExist:
+            return Response({'message':'not found'},status=status.HTTP_404_NOT_FOUND)
+        if dairy_master not in []:
+            serializer = DairyMasterGetSerializer(dairy_master, many=True)
+            data ={
+                'status':'success',
+                'data':serializer.data,
+                'count':len(serializer.data)
+            }
+            return Response(data , status=status.HTTP_200_OK)
+
+    def post(self, request, format=None):
+        serializer = DairyMasterSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, format=None):
+        try:
+            dairy_master = DairyMaster.objects.get(user=request.user.id , id=request.query_params.get('id'))
+        except DairyMaster.DoesNotExist:
+            return Response({'message':'not found'},status=status.HTTP_404_NOT_FOUND)
+        if dairy_master not in []:
+            company_rate = CompanyRate.objects.filter(mainId=request.query_params.get('id'))
+            dairy_to_comapny_rate = DairyToCompanyMilk.objects.filter(mainId=request.query_params.get('id'))
+            print("company_rate",company_rate)
+            if company_rate not in []:
+                company_rate.delete()
+            if dairy_to_comapny_rate not in []:
+                dairy_to_comapny_rate.delete()
+
+            dairy_master.delete()
+            return Response({'message':"success"},status=status.HTTP_200_OK)
+        return Response({'message':"success"},status=status.HTTP_200_OK)
+
+
