@@ -18,6 +18,7 @@ from uuid import UUID
 from .pagination import DairyMasterPagination
 import datetime
 from rest_framework import fields, generics, permissions, views
+from src.utils.pagination import StandardResultsSetPagination
 
 
 
@@ -146,6 +147,45 @@ class DairyMasterGetByManyDate(APIView):
                 'count':len(serializer.data)
             }
             return Response(data , status=status.HTTP_200_OK)
+
+class DairyMasterGetAll(generics.ListAPIView):
+    serializer_class = milkMonthlyReportSerializer
+    renderer_classes = [UserRender]
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
+
+
+    def get(self, request, format=None):
+        try:
+            dairy_master = DairyMaster.objects.filter(user=request.user.id)
+        except DairyMaster.DoesNotExist:
+            return Response({'message':'not found'},status=status.HTTP_404_NOT_FOUND)
+        if dairy_master not in []:
+            serializer = DairyMasterGetSerializer(dairy_master, many=True)
+            if request.GET.get('limit') and request.GET.get('offset'):
+                paginatorData = self.paginate_queryset(serializer.data)
+            else:
+                paginatorData = serializer.data
+            data ={
+                'status':'success',
+                'data':paginatorData,
+                'count':len(paginatorData),
+                'total_count':len(serializer.data)
+            }
+            return Response(data , status=status.HTTP_200_OK)
+
+        # try:
+        #     dairy_master = DairyMaster.objects.filter(user=request.user.id)
+        # except DairyMaster.DoesNotExist:
+        #     return Response({'message':'not found'},status=status.HTTP_404_NOT_FOUND)
+        # if dairy_master not in []:
+        #     serializer = DairyMasterGetSerializer(dairy_master, many=True)
+        #     data ={
+        #         'status':'success',
+        #         'data':serializer.data,
+        #         'count':len(serializer.data)
+        #     }
+        #     return Response(data , status=status.HTTP_200_OK)
 
 
 class MonthlyReportView(generics.ListAPIView):
