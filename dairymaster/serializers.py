@@ -39,7 +39,7 @@ class DairyMasterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DairyMaster
-        fields = ['id','company_rate','dairy_to_company_milk' ,'date','shift','profit','description']
+        fields = ['id','company_rate','dairy_to_company_milk' ,'date','shift','profit','description' , 'user']
 
     def create(self, validated_data):
         date = validated_data.get('date')
