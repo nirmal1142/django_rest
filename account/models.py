@@ -4,7 +4,7 @@ from django.contrib.auth.models import BaseUserManager,AbstractBaseUser
 
 #  Custom User Manager
 class UserManager(BaseUserManager):
-  def create_user(self, email, name, tc, password=None, password2=None):
+  def create_user(self, email, name, tc, password=None, password2=None, mobile=None):
       """
       Creates and saves a User with the given email, name, tc and password.
       """
@@ -15,13 +15,14 @@ class UserManager(BaseUserManager):
           email=self.normalize_email(email),
           name=name,
           tc=tc,
+          mobile=mobile,
       )
 
       user.set_password(password)
       user.save(using=self._db)
       return user
 
-  def create_superuser(self, email, name, tc, password=None):
+  def create_superuser(self, email, name, tc, password=None , mobile = None):
       """
       Creates and saves a superuser with the given email, name, tc and password.
       """
@@ -30,6 +31,7 @@ class UserManager(BaseUserManager):
           password=password,
           name=name,
           tc=tc,
+          mobile=mobile,
       )
       user.is_admin = True
       user.save(using=self._db)
@@ -49,11 +51,12 @@ class User(AbstractBaseUser):
   created_at = models.DateTimeField(auto_now_add=True)
   updated_at = models.DateTimeField(auto_now=True)
   id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+  mobile = models.CharField(max_length=200, null=True, blank=True)
 
   objects = UserManager()
 
   USERNAME_FIELD = 'email'
-  REQUIRED_FIELDS = ['name', 'tc']
+  REQUIRED_FIELDS = ['name', 'tc' , 'mobile']
 
   def __str__(self):
       return self.email

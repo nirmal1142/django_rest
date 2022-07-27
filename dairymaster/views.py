@@ -19,8 +19,20 @@ from .pagination import DairyMasterPagination
 import datetime
 from rest_framework import fields, generics, permissions, views
 from src.utils.pagination import StandardResultsSetPagination
+from twilio.rest import Client
+from django.conf import settings
 
 
+def send_sms(message,phone_number):
+    account_sid = settings.TWILIO_ACCOUNT_SID
+    auth_token = settings.TWILIO_AUTH_TOKEN
+    client = Client(account_sid, auth_token)
+    message = client.messages.create(
+        body=message,
+        from_=settings.TWILIO_NUMBER,
+        to=phone_number
+    )
+    return message.sid
 
 
 def get_token_for_user(user):
@@ -466,8 +478,13 @@ class DairyMasterUpdateView(APIView):
 
     def post(self, request, format=None):
         serializer = DairyMasterSerializer(data=request.data)
+        user = User.objects.get(id=request.user.id)
         if serializer.is_valid():
             serializer.save(user=request.user)
+
+            sms_body = "Dear  " + user.name + ", \n\n " + "Your Today's Profit is  "  + str(serializer.data['profit']) + " \n\n " + "Date : " + str(serializer.data['date']) + " \n\n " + "Shift : " + str(serializer.data['shift']) + " \n\n " + "Thanks & Regards \n\n " + "Dairy Farm"
+
+            # send_sms(sms_body,"+919662169628" )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
